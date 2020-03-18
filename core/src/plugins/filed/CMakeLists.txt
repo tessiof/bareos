@@ -106,7 +106,7 @@ if(HAVE_PYTHON)
   target_link_libraries(python-fd ${PYTHON_LIBRARIES} bareos)
 endif()
 
-if(HAVE_PYTHON)
+if(HAVE_PYTHON AND NOT HAVE_WIN32)
   add_executable(bareos-fd-module-tester python/test/python-fd-module-tester.cc)
   target_link_libraries(bareos-fd-module-tester ${PYTHON_LIBRARIES} bareos)
 
@@ -122,7 +122,7 @@ if(HAVE_PYTHON)
 
 endif()
 
-if(HAVE_PYTHON)
+if(HAVE_PYTHON AND NOT HAVE_WIN32 AND NOT HAVE_DARWIN_OS)
   configure_file(python/setup.py.in ${CMAKE_CURRENT_BINARY_DIR}/python/setup.py)
   add_custom_command(
     TARGET python-fd
