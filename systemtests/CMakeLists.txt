@@ -718,16 +718,16 @@ foreach(TEST_NAME ${SYSTEM_TESTS})
   prepare_test()
 
   configurefilestosystemtest("systemtests" "tests/${TEST_NAME}" "*" @ONLY "")
-  string(CONCAT pythonpath
-  "${CMAKE_SOURCE_DIR}/core/src/plugins/filed/python/pyfiles:"
-  "${CMAKE_SOURCE_DIR}/core/src/plugins/stored/python/pyfiles:"
-  "${CMAKE_SOURCE_DIR}/core/src/plugins/dird/python/pyfiles:"
-  "${CMAKE_BINARY_DIR}/core/src/plugins/filed/pythonmodules:"
-  "${CMAKE_BINARY_DIR}/core/src/plugins/stored/pythonmodules:"
-  "${CMAKE_SOURCE_DIR}/core/src/plugins/dird/pythonmodules:"
-  "${CMAKE_CURRENT_SOURCE_DIR}/tests/${TEST_NAME}/python-modules"
+  string(
+    CONCAT pythonpath
+           "${CMAKE_SOURCE_DIR}/core/src/plugins/filed/python/pyfiles:"
+           "${CMAKE_SOURCE_DIR}/core/src/plugins/stored/python/pyfiles:"
+           "${CMAKE_SOURCE_DIR}/core/src/plugins/dird/python/pyfiles:"
+           "${CMAKE_BINARY_DIR}/core/src/plugins/filed/pythonmodules:"
+           "${CMAKE_BINARY_DIR}/core/src/plugins/stored/pythonmodules:"
+           "${CMAKE_BINARY_DIR}/core/src/plugins/dird/pythonmodules:"
+           "${CMAKE_CURRENT_SOURCE_DIR}/tests/${TEST_NAME}/python-modules"
   )
-
 
   configure_file("environment.in" "tests/${TEST_NAME}/environment" @ONLY)
 
@@ -799,7 +799,9 @@ if(ENABLE_WEBUI_SELENIUM_TEST)
       COMMAND ${tests_dir}/${TEST_NAME}/testrunner
       WORKING_DIRECTORY ${tests_dir}/${TEST_NAME}
     )
-    set_tests_properties(${WEBUI_TEST_PREFIX}${TEST_NAME} PROPERTIES TIMEOUT 180)
+    set_tests_properties(
+      ${WEBUI_TEST_PREFIX}${TEST_NAME} PROPERTIES TIMEOUT 180
+    )
     math(EXPR BASEPORT "${BASEPORT} + 10")
   endforeach()
 endif()
