@@ -1,5 +1,7 @@
 #!/bin/bash
 #
+set -e
+set -u
 # This systemtest tests the plugin functionality
 # of the Bareos FD by using the supplied module
 #   bareos-fd-postgres
