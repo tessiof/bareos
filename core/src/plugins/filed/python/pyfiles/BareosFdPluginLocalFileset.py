@@ -172,19 +172,19 @@ class BareosFdPluginLocalFileset(
         # In this case we have to translate names
         # For future releases consistent names are planned, allowing to assign the
         # complete stat object in one rush
-        if hasattr(mystatp, "st_uid"):
-            mystatp = statp
-        else:
-            mystatp.mode = statp.st_mode
-            mystatp.ino = statp.st_ino
-            mystatp.dev = statp.st_dev
-            mystatp.nlink = statp.st_nlink
-            mystatp.uid = statp.st_uid
-            mystatp.gid = statp.st_gid
-            mystatp.size = statp.st_size
-            mystatp.atime = statp.st_atime
-            mystatp.mtime = statp.st_mtime
-            mystatp.ctime = statp.st_ctime
+        # if hasattr(mystatp, "st_uid"):
+        #     mystatp = statp
+        # else:
+        mystatp.st_mode = statp.st_mode
+        mystatp.st_ino = statp.st_ino
+        mystatp.st_dev = statp.st_dev
+        mystatp.st_nlink = statp.st_nlink
+        mystatp.st_uid = statp.st_uid
+        mystatp.st_gid = statp.st_gid
+        mystatp.st_size = statp.st_size
+        mystatp.st_atime = statp.st_atime
+        mystatp.st_mtime = statp.st_mtime
+        mystatp.st_ctime = statp.st_ctime
         savepkt.fname = file_to_backup
         # os.islink will detect links to directories only when
         # there is no trailing slash - we need to perform checks
@@ -225,15 +225,14 @@ class BareosFdPluginLocalFileset(
             "Set file attributes " + file_name + " with stat " + str(file_attr) + "\n",
         )
         try:
-            os.chown(file_name, file_attr.uid, file_attr.gid)
-            os.chmod(file_name, file_attr.mode)
-            os.utime(file_name, (file_attr.atime, file_attr.mtime))
+            os.chown(file_name, file_attr.st_uid, file_attr.st_gid)
+            os.chmod(file_name, file_attr.st_mode)
+            os.utime(file_name, (file_attr.st_atime, file_attr.st_mtime))
         except Exception as e:
             bareosfd.JobMessage(
                 M_WARNING,
-                "Could net set attributes for file %s: \"%s\"" % (file_to_backup, e.message),
+                "Could net set attributes for file %s: \"%s\"" % (file_name, e.message),
             )
-
         return bRC_OK
 
     def end_backup_file(self):
