@@ -396,9 +396,13 @@ bool droplet_device::FlushRemoteChunk(chunk_io_request *request)
     * Set that we are uploading the chunk.
     */
    if (!SetInflightChunk(request)) {
-      goto bail_out;
+      return false;
    }
 
+  int tries = 0;
+  bool success = false;
+
+do {
    Dmsg1(100, "Flushing chunk %s\n", chunk_name.c_str());
 
    /*
@@ -419,7 +423,7 @@ bool droplet_device::FlushRemoteChunk(chunk_io_request *request)
    switch (status) {
    case DPL_SUCCESS:
       if (sysmd->size > request->wbuflen) {
-         retval = true;
+         success = true;
          goto bail_out;
       }
       break;
@@ -456,7 +460,9 @@ bool droplet_device::FlushRemoteChunk(chunk_io_request *request)
             Mmsg2(errmsg, _("Failed to create directory %s using dpl_mkdir(): ERR=%s.\n"),
                   chunk_dir.c_str(), dpl_status_str(status));
             dev_errno = DropletErrnoToSystemErrno(status);
-            goto bail_out;
+            Bmicrosleep(INFLIGT_RETRY_TIME, 0);
+            tries++;
+            goto again1;
          }
          break;
       default:
@@ -489,17 +495,29 @@ bool droplet_device::FlushRemoteChunk(chunk_io_request *request)
 
    switch (status) {
    case DPL_SUCCESS:
+      success = true;
       break;
    default:
       Mmsg2(errmsg, _("Failed to flush %s using dpl_fput(): ERR=%s.\n"),
             chunk_name.c_str(), dpl_status_str(status));
       dev_errno = DropletErrnoToSystemErrno(status);
-      goto bail_out;
+      Bmicrosleep(INFLIGT_RETRY_TIME, 0);
+      tries++;
+      goto again1;
+   }
+again1:
+    Dmsg1(100, "Flushing start over again (%d)", status);
+
+} while (!success && tries < 5);
+
+   if (tries == 5) {
+      Dmsg0(100, "dpl_fput timed out");
    }
 
-   retval = true;
 
 bail_out:
+   retval = success;
+
    /*
     * Clear that we are uploading the chunk.
     */

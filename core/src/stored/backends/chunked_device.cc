@@ -594,6 +594,8 @@ bool chunked_device::FlushChunk(bool release_chunk, bool move_to_next_chunk)
    if (io_threads_) {
       retval = EnqueueChunk(&request);
    } else {
+      // no multithreading
+      Dmsg1(100, "Try to flush chunk number: %d", request.chunk);
       retval = FlushRemoteChunk(&request);
    }
 
@@ -1241,7 +1243,7 @@ bool chunked_device::is_written()
    }
 
    /* compare expected to written volume size */
-   ssize_t remote_volume_size = chunked_remote_volume_size();
+   size_t remote_volume_size = chunked_remote_volume_size();
    Dmsg3(100, "volume: %s, chunked_remote_volume_size = %lld, VolCatInfo.VolCatBytes = %lld\n",
          current_volname_, remote_volume_size, VolCatInfo.VolCatBytes);
 
