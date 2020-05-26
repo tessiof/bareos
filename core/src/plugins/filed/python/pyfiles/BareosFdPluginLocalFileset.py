@@ -183,7 +183,7 @@ class BareosFdPluginLocalFileset(
                 statp = os.stat(self.file_to_backup)
         except Exception as e:
             bareosfd.JobMessage(
-                M_ERROR],
+                M_ERROR,
                 'Could net get stat-info for file %s: "%s"'
                 % (self.file_to_backup, e.message),
             )
@@ -336,7 +336,6 @@ class BareosFdPluginLocalFileset(
                 M_WARNING,
                 'Could net set attributes for file %s: "%s"' % (file_name, e.message),
             )
-
         return bRC_OK
 
     def end_restore_file(self):

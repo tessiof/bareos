@@ -392,7 +392,7 @@ class BareosFdPluginBaseclass(object):
             )
             os.makedirs(dirname)
         # open creates the file, if not yet existing, we close it again right
-        # aways it will be opened again in plugin_io.
+        # always it will be opened again in plugin_io.
         # But: only do this for regular files, prevent from
         # IOError: (21, 'Is a directory', '/tmp/bareos-restores/my/dir/')
         # if it's a directory
