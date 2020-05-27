@@ -16,7 +16,7 @@ local_db_stop_server() {
 
 local_db_prepare_files() {
   echo "Prepare files"
-  rm --recursive --force tmp data log
+  rm --recursive --force tmp data log wal_archive
   mkdir tmp data log wal_archive
   LANG= pg_ctl --silent --pgdata=data --log=log/postgres.log initdb
 
@@ -40,6 +40,8 @@ local_db_start_server() {
   while ! psql --host="$1" --list > /dev/null 2>&1; do
     [ $((tries-=1)) -eq 0 ] && {
       echo "Could not start postgres server"
+      cat log/logfile
+      cat database/log/*.log
       return 1
     }
     sleep 0.1

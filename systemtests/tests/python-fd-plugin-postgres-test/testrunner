@@ -18,7 +18,7 @@ JobName=backup-bareos-fd
 
 # setup local database server
 DBNAME="backuptest"
-TESTPGHOST="/tmp/${TestName}"
+TESTPGHOST="${current_test_directory}/tmp"
 PSQL="psql --host $TESTPGHOST"
 
 [ -d "$TESTPGHOST" ] || mkdir -p "$TESTPGHOST"
@@ -34,11 +34,12 @@ popd > /dev/null
 
 # Create Test DB with table and 1 statement
 echo "CREATE DATABASE $DBNAME" | ${PSQL} postgres
-cat <<EOF | ${PSQL} ${DBNAME}
+${PSQL} ${DBNAME} <<<"
 CREATE TABLE t(id serial PRIMARY KEY, text VARCHAR(20), created_on TIMESTAMP);
 INSERT INTO t (text, created_on) values ('test for FULL backup', current_timestamp);
 SELECT * FROM t;
-EOF
+"
+PSQL_VERSION=$(${PSQL} -qtAX ${DBNAME} <<< "SHOW server_version;")
 
 start_test
 
@@ -81,7 +82,7 @@ local_db_stop_server "$TESTPGHOST"
 rm -Rf data
 rm -Rf wal_archive
 echo "------------ stopped"
-ps -e | grep postgres
+
 popd > /dev/null
 
 cat <<END_OF_DATA >$tmp/bconcmds
@@ -105,16 +106,21 @@ rm -f database/data/postmaster.pid
 # Create a recovery.conf
 # This may become a plugin feature later on
 # postgres 11 and lower
-#echo "restore_command = 'cp $current_test_directory/database/wal_archive/%f %p'" > $current_test_directory/database/data/recovery.conf
-# from postgres 12:
-touch $current_test_directory/database/data/recovery.signal
-echo "restore_command = 'cp $current_test_directory/database/wal_archive/%f %p'" >> database/data/postgresql.conf
-
+# bc returns 1 if true, 0 if false so we need to negate
+if (! bc -l <<< "${PSQL_VERSION} < 12.0"); then
+  echo "PSQL is lower than 12, using recovery.conf"
+  echo "restore_command = 'cp $current_test_directory/database/wal_archive/%f %p'" > $current_test_directory/database/data/recovery.conf
+else
+  # postgres 12+
+  echo "PSQL is  12+, using recovery.conf"
+  touch $current_test_directory/database/data/recovery.signal
+  echo "restore_command = 'cp $current_test_directory/database/wal_archive/%f %p'" >> database/data/postgresql.conf
+fi
 # start DB again - shall recover to latest possible state
 pushd database > /dev/null
-ps -e | grep postgres
 local_db_start_server "$TESTPGHOST" || exit 1
 popd > /dev/null
+sleep 2
 echo "SELECT * FROM t" | ${PSQL} ${DBNAME} > $tmp/sql.log
 
 check_two_logs
