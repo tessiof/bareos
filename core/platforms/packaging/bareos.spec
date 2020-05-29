@@ -1167,7 +1167,8 @@ echo "This is a meta package to install a full bareos system" > %{buildroot}%{_d
 %attr(0640, %{storage_daemon_user}, %{daemon_group})  %{_sysconfdir}/%{name}/bareos-sd.d/device/RadosStorage.conf.example
 %endif
 
-%endif # not client_only
+# not client_only
+%endif
 
 %files filedaemon
 # fd package (bareos-fd, plugins)
@@ -1348,8 +1349,8 @@ echo "This is a meta package to install a full bareos system" > %{buildroot}%{_d
 /usr/share/pixmaps/bareos-tray-monitor.xpm
 %endif
 
-
-%endif # client_only
+# client_only
+%endif
 
 %files devel
 %defattr(-, root, root)
@@ -1410,7 +1411,8 @@ echo "This is a meta package to install a full bareos system" > %{buildroot}%{_d
 %{plugin_dir}/BareosSdWrapper.py*
 %{plugin_dir}/bareos-sd-class-plugin.py*
 
-%endif # python_plugins
+# python_plugins
+%endif
 
 %if 0%{?glusterfs}
 %files filedaemon-glusterfs-plugin
