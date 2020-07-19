@@ -5,10 +5,8 @@ noarch/bareos-webui
 noarch/python3-bareos
 noarch/python-bareos
 src/bareos
-src/bareos
 src/bareos-vadp-dumper
 src/bareos-vmware-vix-disklib
-src/bareos-webui
 src/bareos-webui
 src/libdroplet
 src/python-bareos

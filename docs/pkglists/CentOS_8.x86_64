@@ -28,10 +28,8 @@ noarch/bareos-webui
 noarch/python-bareos
 noarch/python3-bareos
 src/bareos
-src/bareos
 src/bareos-vadp-dumper
 src/bareos-vmware-vix-disklib
-src/bareos-webui
 src/bareos-webui
 src/python-bareos
 x86_64/bareos
