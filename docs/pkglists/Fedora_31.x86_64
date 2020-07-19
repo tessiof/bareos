@@ -26,7 +26,6 @@ noarch/bareos-webui
 noarch/python-bareos
 noarch/python3-bareos
 src/bareos
-src/bareos
 src/bareos-webui
 src/libdroplet
 src/python-bareos
