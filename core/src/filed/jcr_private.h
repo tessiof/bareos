@@ -68,7 +68,8 @@ struct JobControlRecordPrivate {
   uint32_t StartBlock{};
   uint32_t EndBlock{};
   pthread_t heartbeat_id{};       /**< Id of heartbeat thread */
-  volatile bool hb_started{};     /**< Heartbeat running */
+  bool heartbeat_running{};       /**< Heartbeat running */
+  bool heartbeat_initialized{};   /**< Flag zu synchronize shutdown */
   std::shared_ptr<BareosSocket> hb_bsock;     /**< Duped SD socket */
   std::shared_ptr<BareosSocket> hb_dir_bsock; /**< Duped DIR socket */
   alist* RunScripts{};            /**< Commands to run before and after job */

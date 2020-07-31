@@ -68,10 +68,12 @@ extern "C" void* sd_heartbeat_thread(void* arg)
   dir.reset(jcr->dir_bsock->clone());
 
   jcr->impl->hb_bsock = sd;
-  jcr->impl->hb_started = true;
+  jcr->impl->heartbeat_running = true;
   jcr->impl->hb_dir_bsock = dir;
   dir->suppress_error_msgs_ = true;
   sd->suppress_error_msgs_ = true;
+  jcr->impl->heartbeat_initialized =
+      true;  // set at the end to avoid race condition
 
   /* Hang reading the socket to the SD, and every time we get
    * a heartbeat or we get a wait timeout (5 seconds), we
@@ -105,7 +107,7 @@ extern "C" void* sd_heartbeat_thread(void* arg)
   sd->close();
   dir->close();
   jcr->impl->hb_bsock.reset();
-  jcr->impl->hb_started = false;
+  jcr->impl->heartbeat_running = false;
   jcr->impl->hb_dir_bsock = NULL;
 
   return NULL;
@@ -121,7 +123,7 @@ void StartHeartbeatMonitor(JobControlRecord* jcr)
    */
   if (!no_signals) {
     jcr->impl->hb_bsock = NULL;
-    jcr->impl->hb_started = false;
+    jcr->impl->heartbeat_running = false;
     jcr->impl->hb_dir_bsock = NULL;
     pthread_create(&jcr->impl->heartbeat_id, NULL, sd_heartbeat_thread,
                    (void*)jcr);
@@ -133,26 +135,25 @@ void StopHeartbeatMonitor(JobControlRecord* jcr)
 {
   int cnt = 0;
   if (no_signals) { return; }
-  /* Wait max 10 secs for heartbeat thread to start */
-  while (!jcr->impl->hb_started && cnt++ < 200) {
+
+  /* Wait max 10 secs for heartbeat thread to initialize */
+  while (!jcr->impl->heartbeat_initialized && cnt++ < 200) {
     Bmicrosleep(0, 50000); /* wait for start */
   }
 
-  if (jcr->impl->hb_started) {
-    jcr->impl->hb_bsock->SetTimedOut();   /* set timed_out to Terminate read */
-    jcr->impl->hb_bsock->SetTerminated(); /* set to Terminate read */
+  if (jcr->impl->heartbeat_running) {
+    jcr->impl->hb_bsock->SetTimedOut();
+    jcr->impl->hb_bsock->SetTerminated();
   }
 
   if (jcr->impl->hb_dir_bsock) {
-    jcr->impl->hb_dir_bsock
-        ->SetTimedOut(); /* set timed_out to Terminate read */
-    jcr->impl->hb_dir_bsock->SetTerminated(); /* set to Terminate read */
+    jcr->impl->hb_dir_bsock->SetTimedOut();
+    jcr->impl->hb_dir_bsock->SetTerminated();
   }
 
-  if (jcr->impl->hb_started) {
+  if (jcr->impl->heartbeat_running) {
     Dmsg0(100, "Send kill to heartbeat id\n");
-    pthread_kill(jcr->impl->heartbeat_id,
-                 TIMEOUT_SIGNAL); /* make heartbeat thread go away */
+    pthread_kill(jcr->impl->heartbeat_id, TIMEOUT_SIGNAL);
     Bmicrosleep(0, 50000);
   }
   cnt = 0;
@@ -160,9 +161,8 @@ void StopHeartbeatMonitor(JobControlRecord* jcr)
   /*
    * Wait max 100 secs for heartbeat thread to stop
    */
-  while (jcr->impl->hb_started && cnt++ < 200) {
-    pthread_kill(jcr->impl->heartbeat_id,
-                 TIMEOUT_SIGNAL); /* make heartbeat thread go away */
+  while (jcr->impl->heartbeat_running && cnt++ < 200) {
+    pthread_kill(jcr->impl->heartbeat_id, TIMEOUT_SIGNAL);
     Bmicrosleep(0, 500000);
   }
 
@@ -175,6 +175,7 @@ void StopHeartbeatMonitor(JobControlRecord* jcr)
     // delete jcr->impl_->hb_dir_bsock;
     jcr->impl->hb_dir_bsock.reset();
   }
+  jcr->impl->heartbeat_initialized = false;
 }
 
 /**
@@ -196,8 +197,10 @@ extern "C" void* dir_heartbeat_thread(void* arg)
   dir = jcr->dir_bsock->clone();
 
   jcr->impl->hb_bsock.reset(dir);
-  jcr->impl->hb_started = true;
+  jcr->impl->heartbeat_running = true;
   dir->suppress_error_msgs_ = true;
+  jcr->impl->heartbeat_initialized =
+      true;  // set at the end to avoid race condition
 
   while (!dir->IsStop()) {
     time_t now, next;
@@ -213,7 +216,7 @@ extern "C" void* dir_heartbeat_thread(void* arg)
   }
   dir->close();
   jcr->impl->hb_bsock.reset();
-  jcr->impl->hb_started = false;
+  jcr->impl->heartbeat_running = false;
   return NULL;
 }
 
